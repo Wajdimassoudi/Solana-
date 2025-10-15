@@ -5,7 +5,7 @@ interface NotificationProps {
   message: string;
   type: 'success' | 'info';
   onClose: () => void;
-  isRTL: boolean;
+  isRTL?: boolean;
 }
 
 const notificationStyles = {

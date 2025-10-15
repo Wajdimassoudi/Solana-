@@ -5,81 +5,95 @@ import { translations } from '../translations';
 
 interface TestimonialsProps {
   t: (key: string) => string;
-  timeAgo: (date: Date) => string;
   language: Language;
 }
 
-export const Testimonials: React.FC<TestimonialsProps> = ({ t, timeAgo, language }) => {
+const useLiveTestimonials = (language: Language, interval: number) => {
   const [liveTestimonials, setLiveTestimonials] = useState<Testimonial[]>([]);
 
   useEffect(() => {
-    const initialTestimonials = translations[language].testimonials.slice(0, 5).map(t => ({
-      ...t,
-      timestamp: new Date(Date.now() - Math.random() * 600000) // 0-10 mins ago
-    }));
-    setLiveTestimonials(initialTestimonials);
+    // Initial population
+    const initialPool = translations[language].testimonials;
+    setLiveTestimonials(
+      initialPool.slice(0, 3).map(t => ({ ...t, timestamp: new Date(Date.now() - Math.random() * 600000) }))
+    );
 
-    const intervalId = setInterval(() => {
+    const timer = setInterval(() => {
       setLiveTestimonials(prev => {
-        const existingQuotes = prev.map(p => p.quote);
-        const availableTestimonials = translations[language].testimonials.filter(t => !existingQuotes.includes(t.quote));
-        const pool = availableTestimonials.length > 0 ? availableTestimonials : translations[language].testimonials;
-        const newTestimonial = pool[Math.floor(Math.random() * pool.length)];
+        const pool = translations[language].testimonials;
+        const existingNames = prev.map(p => p.name);
+        const availableTestimonials = pool.filter(p => !existingNames.includes(p.name));
+        const newTestimonial = availableTestimonials.length > 0 
+          ? availableTestimonials[Math.floor(Math.random() * availableTestimonials.length)]
+          : pool[Math.floor(Math.random() * pool.length)];
+
+        const updatedTestimonial: Testimonial = {
+          ...newTestimonial,
+          timestamp: new Date(),
+        };
         
-        const updatedList = [{ ...newTestimonial, timestamp: new Date() }, ...prev];
-        return updatedList.slice(0, 7); // Keep the list size manageable
+        return [updatedTestimonial, ...prev].slice(0, 5);
       });
-    }, 6000); // Add a new testimonial every 6 seconds
+    }, interval);
 
-    return () => clearInterval(intervalId);
-  }, [language]);
+    return () => clearInterval(timer);
+  }, [language, interval]);
+  
+  return liveTestimonials;
+};
 
-  // This effect will re-render the component every 5 seconds to update the "time ago" string
-  const [, setTick] = useState(0);
-  useEffect(() => {
-      const timerId = setInterval(() => setTick(tick => tick + 1), 5000);
-      return () => clearInterval(timerId);
-  }, []);
 
+const TestimonialCard: React.FC<{ testimonial: Testimonial, timeAgo: string }> = ({ testimonial, timeAgo }) => {
   return (
-    <div className="w-full max-w-6xl mx-auto mt-16 px-4">
-      <h3 className="text-3xl font-bold text-white text-center mb-8">{t('testimonialsTitle')}</h3>
-      <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {liveTestimonials.map((testimonial, index) => (
-            <div 
-              key={`${testimonial.quote}-${index}`} 
-              className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 flex flex-col transition-all duration-500 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <p className="text-gray-300 italic flex-grow">"{testimonial.quote}"</p>
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-700/50">
-                <div className="flex items-center">
-                  <UserCircleIcon className="w-10 h-10 text-gray-500 ltr:mr-3 rtl:ml-3" />
-                  <div>
-                    <p className="font-semibold text-white">{testimonial.name}</p>
-                    <p className="text-sm text-gray-400">{testimonial.location}</p>
-                  </div>
-                </div>
-                {testimonial.timestamp && (
-                  <p className="text-xs text-gray-500">{timeAgo(testimonial.timestamp)}</p>
-                )}
-              </div>
-            </div>
-          ))}
+    <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 flex flex-col animate-fade-in">
+      <p className="text-gray-300 italic flex-grow">"{testimonial.quote}"</p>
+      <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-700">
+        <div className="flex items-center">
+          <UserCircleIcon className="w-10 h-10 text-gray-500 ltr:mr-4 rtl:ml-4" />
+          <div>
+            <p className="font-semibold text-white">{testimonial.name}</p>
+          </div>
         </div>
-        <div className="absolute top-0 -inset-x-4 h-20 bg-gradient-to-b from-gray-900 to-transparent pointer-events-none"></div>
-        <div className="absolute bottom-0 -inset-x-4 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+        <p className="text-xs text-gray-400">{timeAgo}</p>
       </div>
       <style>{`
         @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+        .animate-fade-in { animation: fade-in 0.5s ease-out; }
       `}</style>
     </div>
   );
 };
 
-export default Testimonials;
+
+export const Testimonials: React.FC<TestimonialsProps> = ({ t, language }) => {
+  const liveTestimonials = useLiveTestimonials(language, 7000); // New testimonial every 7 seconds
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(timer);
+  }, []);
+
+  const getTimeAgo = (timestamp: Date) => {
+    const seconds = Math.floor((currentTime.getTime() - timestamp.getTime()) / 1000);
+    return translations[language].timeAgo(seconds);
+  };
+
+  return (
+    <div className="w-full max-w-6xl mx-auto mt-16 px-4">
+      <h3 className="text-3xl font-bold text-white text-center mb-8">{t('testimonialsTitle')}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {liveTestimonials.map((testimonial) => (
+          <TestimonialCard 
+            key={testimonial.name + testimonial.timestamp.toISOString()} 
+            testimonial={testimonial} 
+            timeAgo={getTimeAgo(testimonial.timestamp)} 
+          />
+        ))}
+      </div>
+    </div>
+  );
+};

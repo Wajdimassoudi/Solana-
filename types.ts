@@ -1,28 +1,50 @@
-export type TransactionType = 'deposit' | 'payout';
-
 export interface Transaction {
   id: string;
-  type: TransactionType;
+  type: 'deposit' | 'payout';
   amount: number;
   timestamp: Date;
-  status: 'Pending' | 'Completed' | 'Failed';
-  from?: string; // Optional: for deposits
-  to?: string;   // Optional: for payouts
+  from: string;
+  to: string;
 }
 
 export interface Testimonial {
   name: string;
-  location: string;
   quote: string;
-  timestamp?: Date; // For dynamic testimonials
+  timestamp: Date;
 }
 
 export type Language = 'en' | 'es' | 'fr' | 'ar';
 
+export interface TranslationSet {
+  [key: string]: string;
+}
+
+export interface LanguageTranslations {
+  [key: string]: any; // Allow for functions and arrays
+  headerTitle: string;
+  headerSubtitle: string;
+  depositCardTitle: string;
+  depositCardSubtitle: string;
+  specialEvent: string;
+  endsIn: string;
+  depositAddressLabel: string;
+  minDeposit: string;
+  copySuccess: string;
+  copyError: string;
+  showQRCode: string;
+  hideQRCode: string;
+  liveTransactionsTitle: string;
+  testimonialsTitle: string;
+  footerText: string;
+  deposit: string;
+  payout: string;
+  testimonials: { name: string; quote: string }[];
+  timeAgo: (seconds: number) => string;
+}
+
 export interface Translations {
-  [key: string]: {
-    [key: string]: any;
-    timeAgo: (seconds: number) => string;
-    testimonials: Testimonial[];
-  };
+  en: LanguageTranslations;
+  es: LanguageTranslations;
+  fr: LanguageTranslations;
+  ar: LanguageTranslations;
 }

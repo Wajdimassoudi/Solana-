@@ -11,13 +11,13 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
   return (
-    <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40 text-white p-4 shadow-lg">
+    <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40 text-white p-4 shadow-lg border-b border-gray-800">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-3">
           <SolanaLogoIcon className="w-8 h-8" />
           <div>
-             <h1 className="text-xl font-bold">{t('headerTitle')}</h1>
-             <p className="text-xs text-purple-400 font-semibold">{t('headerSubtitle')}</p>
+            <h1 className="text-xl font-bold">{t('headerTitle')}</h1>
+            <p className="text-xs text-purple-400 font-semibold">{t('headerSubtitle')}</p>
           </div>
         </div>
         <LanguageSwitcher language={language} setLanguage={setLanguage} />

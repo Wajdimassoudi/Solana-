@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { DEPOSIT_ADDRESS } from '../constants';
-import { CopyIcon, CheckIcon, QRIcon, SolanaCoinIcon } from './icons';
+import { CopyIcon, CheckIcon, QRIcon, ClockIcon } from './icons';
 
 interface DepositCardProps {
-  t: (key: string) => string;
+  t: (key: string, replacements?: { [key: string]: string | number }) => string;
   showNotification: (message: string, type: 'success' | 'info') => void;
 }
 
@@ -14,11 +14,12 @@ export const DepositCard: React.FC<DepositCardProps> = ({ t, showNotification })
   const [timeLeft, setTimeLeft] = useState(24 * 60 * 60); // 24 hours in seconds
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prevTime => (prevTime > 0 ? prevTime - 1 : 0));
+    if (timeLeft <= 0) return;
+    const timer = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearTimeout(timer);
+  }, [timeLeft]);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -40,14 +41,18 @@ export const DepositCard: React.FC<DepositCardProps> = ({ t, showNotification })
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 sm:p-8 shadow-xl w-full max-w-md mx-auto border border-purple-500/50">
+    <div className="bg-gray-800 rounded-lg p-6 sm:p-8 shadow-xl w-full max-w-md mx-auto border border-purple-600/50 sticky top-24">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold text-white mb-2">{t('depositCardTitle')}</h2>
-        <p className="text-purple-400 font-semibold">{t('depositCardSubtitle')}</p>
+        <h2 className="text-2xl font-bold text-white">{t('depositCardTitle')}</h2>
+        <p className="text-purple-400 font-semibold mt-1">{t('depositCardSubtitle')}</p>
       </div>
       
-      <div className="bg-yellow-400/10 border border-yellow-400/50 text-yellow-300 text-center text-sm p-3 rounded-md mb-6">
-        {t('eventEndsIn')} <span className="font-bold text-lg tabular-nums">{formatTime(timeLeft)}</span>
+      <div className="bg-yellow-400/10 border border-yellow-500 text-yellow-300 text-center p-3 rounded-lg mb-6">
+        <p className="font-bold text-sm">{t('specialEvent')}</p>
+        <div className="flex items-center justify-center gap-2 mt-2 font-mono text-lg">
+          <ClockIcon className="w-5 h-5" />
+          <span>{t('endsIn')}: {formatTime(timeLeft)}</span>
+        </div>
       </div>
 
       <div className="bg-gray-900 p-4 rounded-md">
@@ -57,16 +62,13 @@ export const DepositCard: React.FC<DepositCardProps> = ({ t, showNotification })
           <button 
             onClick={handleCopy} 
             className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-700 flex-shrink-0"
-            aria-label={t('copyAriaLabel')}
+            aria-label="Copy deposit address"
           >
             {isCopied ? <CheckIcon className="w-5 h-5 text-green-400" /> : <CopyIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>
-
-      <div className="text-center mt-4 text-sm text-gray-400">
-        {t('minDepositText')} <span className="font-bold text-white">0.5 SOL</span>
-      </div>
+       <p className="text-center text-xs text-gray-400 mt-4">{t('minDeposit', { amount: 0.5 })}</p>
 
       <div className="mt-6 flex justify-center">
         <button
@@ -74,7 +76,7 @@ export const DepositCard: React.FC<DepositCardProps> = ({ t, showNotification })
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <QRIcon className="w-5 h-5" />
-          {showQR ? t('hideQRButton') : t('showQRButton')}
+          {showQR ? t('hideQRCode') : t('showQRCode')}
         </button>
       </div>
       {showQR && (
@@ -82,15 +84,13 @@ export const DepositCard: React.FC<DepositCardProps> = ({ t, showNotification })
           <QRCode value={DEPOSIT_ADDRESS} size={160} bgColor="#FFFFFF" fgColor="#000000" />
         </div>
       )}
-      <style>{`
+       <style>{`
         @keyframes fade-in {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
         .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
       `}</style>
     </div>
   );
 };
-
-export default DepositCard;
