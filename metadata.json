@@ -1,5 +1,0 @@
-{
-  "name": "Solana Win",
-  "description": "An intelligent and interactive platform that securely and easily collects Solana (SOL) from users. Users can deposit SOL to a specific address, and the collected funds are automatically forwarded to a destination address.",
-  "requestFramePermissions": []
-}
